@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:carros/pages/carro/carro_page.dart';
-import 'package:carros/pages/carro/carros_bloc.dart';
+import 'package:carros/pages/carro/carros_model.dart';
 import 'package:carros/utils/nav.dart';
 import 'package:carros/widgets/text_error.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'carro.dart';
 import 'carros_api.dart';
@@ -20,10 +21,9 @@ class CarrosListView extends StatefulWidget {
 
 class _CarrosListViewState extends State<CarrosListView>
     with AutomaticKeepAliveClientMixin<CarrosListView> {
-
   String get tipo => widget.tipo;
 
-  final _bloc = CarrosBloc();
+  final _model = CarrosModel();
 
   @override
   bool get wantKeepAlive => true;
@@ -31,33 +31,31 @@ class _CarrosListViewState extends State<CarrosListView>
   @override
   void initState() {
     super.initState();
-    _bloc.loadCarros(widget.tipo);
+    _model.loadCarros(widget.tipo);
   }
-
-@override
-  void dispose() {
-    super.dispose();
-    _bloc.dispose();
+  void fetch(){
+    _model.loadCarros(tipo);
   }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    return StreamBuilder(
-      stream: _bloc.stream,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasError) {
-          print(snapshot.error);
-          return TextError("Não foi possivel carregar os carros");
+    return Observer(
+      builder: (_) {
+        List<Carro> carros = _model.carros;
+        if (_model.error != null) {
+          return TextError(
+            "Não foi possivel carregar os carros \n\n Clique aqui para tentar novamente",
+            onPressed: fetch,
+          );
         }
 
-        if (!snapshot.hasData) {
+        if (carros == null) {
           return Center(
             child: CircularProgressIndicator(),
           );
         }
-        List<Carro> carros = snapshot.data;
+
         return _listView(carros);
       },
     );
