@@ -1,19 +1,33 @@
-import 'package:carros/pages/carro/loripsomApi.dart';
+import 'package:carros/pages/carro/loripsom_api.dart';
 import 'package:carros/widgets/text.dart';
 import 'package:flutter/material.dart';
 
 import 'carro.dart';
 
-class CarroPage extends StatelessWidget {
+class CarroPage extends StatefulWidget {
   Carro carro;
 
   CarroPage(this.carro);
 
   @override
+  _CarroPageState createState() => _CarroPageState();
+}
+
+class _CarroPageState extends State<CarroPage> {
+  final _loripsomBloc = LoripsonBloc();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loripsomBloc.fetch();
+
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(carro.nome),
+        title: Text(widget.carro.nome),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.place),
@@ -44,7 +58,7 @@ class CarroPage extends StatelessWidget {
       padding: EdgeInsets.all(16),
       child: ListView(
         children: <Widget>[
-          Image.network(carro.urlFoto),
+          Image.network(widget.carro.urlFoto),
           _bloco1(),
           Divider(),
           _bloco2(),
@@ -53,58 +67,63 @@ class CarroPage extends StatelessWidget {
     );
   }
 
-  _bloco2(){
+  _bloco2() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        text(carro.descricao, fontSize: 16, bold: true),
-        SizedBox(height: 20,),
-        FutureBuilder<String>(
-          future: LoripsonApi.getLoripson(), 
-          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {  
-            if(!snapshot.hasData){
-              return Center(child: CircularProgressIndicator(backgroundColor: Colors.red,),);
+        text(widget.carro.descricao, fontSize: 16, bold: true),
+        SizedBox(
+          height: 20,
+        ),
+        StreamBuilder(
+          stream: _loripsomBloc.stream,
+          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+            if (!snapshot.hasData) {
+              return Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Colors.red,
+                ),
+              );
             }
             return text(snapshot.data);
           },
-
-          ),
+        ),
       ],
     );
   }
 
   Row _bloco1() {
     return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                text(carro.nome, fontSize: 20, bold: true),
-                text(carro.tipo),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                IconButton(
-                  icon: Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                    size: 40,
-                  ),
-                  onPressed: _onClickFavorito,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.share,
-                    size: 40,
-                  ),
-                  onPressed: _onClickShare,
-                )
-              ],
-            ),
+            text(widget.carro.nome, fontSize: 20, bold: true),
+            text(widget.carro.tipo),
           ],
-        );
+        ),
+        Row(
+          children: <Widget>[
+            IconButton(
+              icon: Icon(
+                Icons.favorite,
+                color: Colors.red,
+                size: 40,
+              ),
+              onPressed: _onClickFavorito,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.share,
+                size: 40,
+              ),
+              onPressed: _onClickShare,
+            )
+          ],
+        ),
+      ],
+    );
   }
 
   void _onClickMapa() {}

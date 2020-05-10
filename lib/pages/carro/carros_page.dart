@@ -6,17 +6,61 @@ import 'package:flutter/material.dart';
 
 import 'carro.dart';
 
-class CarrosListView extends StatelessWidget {
-  List<Carro> carros;
+class CarrosListView extends StatefulWidget {
+  String tipo;
 
-  CarrosListView(this.carros);
+  CarrosListView(this.tipo);
+
+  @override
+  _CarrosListViewState createState() => _CarrosListViewState();
+}
+
+class _CarrosListViewState extends State<CarrosListView>
+    with AutomaticKeepAliveClientMixin<CarrosListView> {
+
+  String get tipo => widget.tipo;
+
+  final _bloc = CarrosBloc();
 
   @override
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    _bloc.loadCarros(widget.tipo);
+  }
+
+@override
+  void dispose() {
+    super.dispose();
+    _bloc.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-  
+    super.build(context);
+
+    return StreamBuilder(
+      stream: _bloc.stream,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasError) {
+          print(snapshot.error);
+          return TextError("Não foi possivel carregar os carros");
+        }
+
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        List<Carro> carros = snapshot.data;
+        return _listView(carros);
+      },
+    );
+  }
+
+  Container _listView(List<Carro> carros) {
     return Container(
       padding: EdgeInsets.all(16),
       child: ListView.builder(
@@ -52,7 +96,7 @@ class CarrosListView extends StatelessWidget {
                     children: <Widget>[
                       FlatButton(
                         child: const Text('Detalhes'),
-                        onPressed: () => _onClickCarro(context, c),
+                        onPressed: () => _onClickCarro(c),
                       ),
                       FlatButton(
                         child: const Text('Share'),
@@ -71,7 +115,7 @@ class CarrosListView extends StatelessWidget {
     );
   }
 
-  _onClickCarro(context, Carro c) {
+  _onClickCarro(Carro c) {
     push(context, CarroPage(c));
   }
 }
